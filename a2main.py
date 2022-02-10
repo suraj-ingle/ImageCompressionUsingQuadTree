@@ -14,7 +14,7 @@ from typing import List, Tuple
 from a2files import QuadTreeFile, BMPFile, BMP_EXTENSION, QDT_EXTENSION
 from a2tree import QuadTree
 
-MIRROR_IMG = False
+MIRROR_IMG = True
 
 
 class Compressor:
@@ -153,4 +153,40 @@ class Decompressor:
 if __name__ == '__main__':
 
     # TODO: Write your user-interface code here
+    print("Quad Tree Image Compression")
+    
+    print("===================================\n")
+    print("Input 'q' at any point to terminate the app")
+    print("Command [c-> Compress | d-> Decompress] : ")
+    command = input()
+    if(isCorD == "q"):
+        exit()
+    if(command == 'c'):
+        print("Loss [between 0-255] : ")
+        loss = input()
+        if(loss == "q"):
+            exit()
+        print("File Name: ")
+        fileName = input()
+        if(fileName == "q"):
+            exit()    
+            
+        comp = Compressor(fileName, loss)
+        
+        print("Compressing ")
+        comp.run()
+        print("Compression Done")
+    
+    elif(command == 'd'):
+        print("File Name: ")
+        fileName = input()
+        if(fileName == "q"):
+            exit()    
+            
+        decomp = Decompressor(fileName, loss)
+        print("Decompressing ")
+        decomp.run()    
+        print("Decompression done")
+        
+    
     pass

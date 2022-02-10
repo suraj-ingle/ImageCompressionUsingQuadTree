@@ -23,10 +23,16 @@ def mean_and_count(matrix: List[List[int]]) -> Tuple[float, int]:
     """
     total = 0
     count = 0
+    # print("matrix: ", matrix)
+    # print("W:", len(matrix), "H:", len(matrix[0]))
+
     for row in matrix:
+        # print("row: ", row)
         for v in row:
             total += v
             count += 1
+
+    # print('matrixEnd', count)
     return total / count, count
 
 
@@ -44,7 +50,9 @@ def standard_deviation_and_mean(matrix: List[List[int]]) -> Tuple[float, float]:
     for row in matrix:
         for v in row:
             total_square_error += ((v - avg) ** 2)
-    return math.sqrt(total_square_error / count), avg
+    deviation = math.sqrt(total_square_error / count)
+    # print("deviation: ", deviation)
+    return deviation, avg
 
 
 class QuadTreeNode:
@@ -78,7 +86,7 @@ class QuadTreeNodeEmpty(QuadTreeNode):
         Note: An empty node still counts as 1 node in the quad tree
         """
         # TODO: implement this method
-        pass
+        return 1
 
     def convert_to_pixels(self, width: int, height: int) -> List[List[int]]:
         """
@@ -89,7 +97,12 @@ class QuadTreeNodeEmpty(QuadTreeNode):
         # might not be empty and may contain the value 255 in it. This will
         # cause the decompressed image to have unexpected white pixels.
         # You may ignore this caveat for the purpose of this assignment.
+        # print("empty node convertToPix: ",[[255] * width for _ in range(height)], "w,h: ", width, height)
         return [[255] * width for _ in range(height)]
+
+    def convert_to_pixels_helper(self, w: int, h: int, x: int, y: int, outputArray: List[List[int]]):
+        # print("Empty Node")
+        return
 
     def preorder(self) -> str:
         """
@@ -116,7 +129,8 @@ class QuadTreeNodeLeaf(QuadTreeNode):
         Return the size of the subtree rooted at this node
         """
         # TODO: complete this method
-        pass
+        # leaf node has no childern
+        return 1
 
     def convert_to_pixels(self, width: int, height: int) -> List[List[int]]:
         """
@@ -127,7 +141,32 @@ class QuadTreeNodeLeaf(QuadTreeNode):
         [[5, 5], [5, 5]]
         """
         # TODO: complete this method
-        pass
+        # convert single leaf node to 2x2 pixel matrix
+        pixArr = []
+        for h in range(height):
+            rowArr = []
+            for w in range(width):
+                rowArr.append(self.value)
+            pixArr.append(rowArr)
+        # print("leaf convertToPix: ", pixArr, "W,H: ", width, height)
+        return pixArr
+
+    def convert_to_pixels_helper(self, w: int, h: int, x: int, y: int, outputArray: List[List[int]]):
+        matrix = outputArray
+        # fill the leaf value 2d array
+        # children attributes
+
+        newMatrix = self.convert_to_pixels(w, h)
+        # print("leaf node: ", newMatrix )
+        # print("h,w,x,y: ", h, w, x, y)
+        for i in range(0, h):
+            for j in range(0, w):
+                # print("[x+i], [y+j] , i, j: ",[x+i], [y+j], i, j)
+                matrix[x+i][y+j] = newMatrix[i][j]
+                # print("evolved matrix:")
+                # for row in matrix:
+                #     print(row)
+        return
 
     def preorder(self) -> str:
         """
@@ -137,6 +176,7 @@ class QuadTreeNodeLeaf(QuadTreeNode):
 
 
 class QuadTreeNodeInternal(QuadTreeNode):
+
     """
     An internal node is a non-leaf node, which represents an area that will be
     further divided into quadrants (self.children).
@@ -151,6 +191,7 @@ class QuadTreeNodeInternal(QuadTreeNode):
     """
     children: List[Optional[QuadTreeNode]]
 
+
     def __init__(self) -> None:
         """
         Order of children: bottom-left, bottom-right, top-left, top-right
@@ -159,7 +200,7 @@ class QuadTreeNodeInternal(QuadTreeNode):
 
         # Length of self.children must be always 4.
         self.children = [None, None, None, None]
-
+        # self.nodeCount = 1
     def tree_size(self) -> int:
         """
         The size of the subtree rooted at this node.
@@ -168,7 +209,14 @@ class QuadTreeNodeInternal(QuadTreeNode):
         including the root node.
         """
         # TODO: complete this method
-        pass
+        size = 1
+        size += self.children[0].tree_size()
+        size += self.children[1].tree_size()
+        size += self.children[2].tree_size()
+        size += self.children[3].tree_size()
+
+        return size
+
 
     def convert_to_pixels(self, width: int, height: int) -> List[List[int]]:
         """
@@ -177,11 +225,46 @@ class QuadTreeNodeInternal(QuadTreeNode):
         You'll need to recursively get the pixels for the quadrants and
         combine them together.
 
-        Make sure you get the sizes (width/height) of the quadrants correct!
+        Make sure you get the sizes (width
+        # This assert will help you find errors.
+        # Since this is an internal node, the first entry to restore should
+        # be an empty string
+        assert lst[start] == ''
+
+        # This assert will help you find errors.
+        # Since this is an internal node, the first entry to restore should
+        # be an empty string
+        assert lst[start] == ''
+/height) of the quadrants correct!
         Read the docstring for split_quadrants() for more info.
         """
         # TODO: complete this method
-        pass
+        # traverse through tree. determine position, height, width of leaf node pixels
+        # generate 2d array.
+
+        parentNodePixArr = []
+        for row in range(height):
+            rowArr =[]
+            for col in range(width):
+                rowArr.append(-1)
+            parentNodePixArr.append(rowArr)
+
+        self.convert_to_pixels_helper( width, height, 0, 0, parentNodePixArr)
+        # print("converted 2D array")
+        # for row in parentNodePixArr:
+        #     print(row)
+        return parentNodePixArr
+
+    def convert_to_pixels_helper(self, w: int, h: int, x: int, y: int, outputArray: List[List[int]]):
+        # matrix = outputArray
+        # fill the leaf value 2d array
+        # children attributes
+        # print("Internal Node:  h,w,x,y", h,w,x,y)
+
+        self.children[0].convert_to_pixels_helper(int((w)/2)  , int(h/2)    , x, y, outputArray) # TR
+        self.children[1].convert_to_pixels_helper(int((w+1)/2), int(h/2)    , x, y+ int(w/2), outputArray) # TR
+        self.children[2].convert_to_pixels_helper(int(w/2)    , int((h+1)/2), x+int(h/2), y, outputArray) # BL
+        self.children[3].convert_to_pixels_helper(int((w+1)/2), int((h+1)/2), x+int(h/2), y+int(w/2), outputArray) # BR
 
     def preorder(self) -> str:
         """
@@ -193,7 +276,15 @@ class QuadTreeNodeInternal(QuadTreeNode):
         string.
         """
         # TODO: complete this method
-        pass
+        # call 4 preorders, append the return values to string with ','
+        str0 = self.children[0].preorder()
+        str1 = self.children[1].preorder()
+        str2 = self.children[2].preorder()
+        str3 = self.children[3].preorder()
+
+        subTreePreorder = "," + str0 + "," + str1 + "," + str2 + "," + str3
+        # print("subtree prorder: ", subTreePreorder)
+        return subTreePreorder
 
     def restore_from_preorder(self, lst: List[str], start: int) -> int:
         """
@@ -205,9 +296,32 @@ class QuadTreeNodeInternal(QuadTreeNode):
         # Since this is an internal node, the first entry to restore should
         # be an empty string
         assert lst[start] == ''
-
+        preOrderIndex = [start+1]
         # TODO: complete this method
+        self.restore_from_preorder_helper(lst, preOrderIndex)
         pass
+
+    def restore_from_preorder_helper(self, preOrderList, index):
+        if(len(preOrderList) == index[0]):
+            return
+
+        emptyPos = 0
+        while(emptyPos < 4) :
+            if preOrderList[index[0]] == 'E':
+                self.children[emptyPos] = QuadTreeNodeEmpty()
+                emptyPos += 1
+                index[0] += 1
+
+            elif preOrderList[index[0]] == '':
+                self.children[emptyPos] = QuadTreeNodeInternal()
+                index[0] += 1
+                self.children[emptyPos].restore_from_preorder_helper(preOrderList, index)
+                emptyPos += 1
+
+            else:
+                self.children[emptyPos] = QuadTreeNodeLeaf(int(preOrderList[index[0]]))
+                emptyPos += 1
+                index[0] += 1
 
     def mirror(self) -> None:
         """
@@ -226,7 +340,8 @@ class QuadTreeNodeInternal(QuadTreeNode):
         See the assignment handout for a visual example.
         """
         # TODO
-        pass
+        print("mirror self: ", self)
+        
 
 
 class QuadTree:
@@ -279,7 +394,47 @@ class QuadTree:
         test cases unexpectedly.
         """
         # TODO: complete this method
-        pass
+        # recieve pixel array
+        # create a intermediate node, value = mean of pixel
+        # find deviation loss condition
+        # if below loss: return
+        # if above loss:
+        # split pixels in quadrant
+        # initialise 4 intermediate node and call build_quad_tree() with quadrant pixels as pixels arr
+        # print("pixels: ", pixels)
+        if( pixels == [[]]):
+            # print("adding empty node: ")
+            emptyNode = QuadTreeNodeEmpty()
+            return emptyNode
+
+        deviation, mean = standard_deviation_and_mean(pixels)
+        # print(deviation, self.loss_level, mean)
+        if(deviation <= self.loss_level):
+            # create n return leaf node. ie root == leaf
+            # print("adding leaf with value: ", int(mean))
+            leafNode = QuadTreeNodeLeaf(round(mean))
+            return leafNode
+        else:
+            quadArr = self._split_quadrants(pixels)
+            # print("spliting to: ", )
+            # for qd in range(4):
+            #     print("qd", qd)
+            #     for row in quadArr[qd]:
+            #         print(row)
+
+
+            intermediateNode = QuadTreeNodeInternal()
+            intermediateNode.children[0] = self._build_tree_helper(quadArr[0])
+            intermediateNode.children[1] = self._build_tree_helper(quadArr[1])
+            intermediateNode.children[2] = self._build_tree_helper(quadArr[2])
+            intermediateNode.children[3] = self._build_tree_helper(quadArr[3])
+            # print("layer complete")
+            return intermediateNode
+            # create intermediate node, split to 4 quadrants,
+            # call build_quad_tree with quadrant pixels as pixels arr and
+            # assign the return value to children of intermediate node
+
+
 
     @staticmethod
     def _split_quadrants(pixels: List[List[int]]) -> List[List[List[int]]]:
@@ -299,7 +454,48 @@ class QuadTree:
         [[[1]], [[2, 3]], [[4], [7]], [[5, 6], [8, 9]]]
         """
         # TODO: complete this method
-        pass
+        height = len(pixels)
+        width = len(pixels[0])
+
+        halfH = int(height/2)
+        halfW = int(width/2)
+        topL = []
+        topR = []
+        bottomL = []
+        bottomR = []
+
+
+        #q1 top left in array (bottom left in Image)
+        if(halfH == 0):
+            topL = [[]]
+            topR = [[]]
+        for y in range(halfH):
+            rowArr = []
+            for x in range(halfW):
+                rowArr.append(pixels[y][x])
+            topL.append(rowArr)
+            #q2 top right in array (bottom right in Image)
+        for y in range(halfH):
+            rowArr = []
+            for x in range(halfW, width):
+                rowArr.append(pixels[y][x])
+            topR.append(rowArr)
+            #q3 bottom left in array (top left in Image)
+        for y in range(halfH,height):
+            rowArr = []
+            for x in range(halfW):
+                rowArr.append(pixels[y][x])
+            bottomL.append(rowArr)
+            #q4 bottom right in array (top right in Image)
+        for y in range(halfH,height):
+            rowArr = []
+            for x in range(halfW,width):
+                rowArr.append(pixels[y][x])
+            bottomR.append(rowArr)
+
+        resArr = [topL,topR,bottomL,bottomR]
+        # print(resArr)
+        return resArr
 
     def tree_size(self) -> int:
         """
@@ -312,7 +508,11 @@ class QuadTree:
         """
         Return the pixels represented by this tree as a 2D matrix
         """
-        return self.root.convert_to_pixels(self.width, self.height)
+        compressedPixArr = self.root.convert_to_pixels(self.width, self.height)
+        # print("rootTree pixel arr")
+        # for row in compressedPixArr:
+        #     print(row)
+        return compressedPixArr
 
     def preorder(self) -> str:
         """
@@ -335,8 +535,7 @@ class QuadTree:
         return self.root.preorder()
 
     @staticmethod
-    def restore_from_preorder(lst: List[str],
-                              width: int, height: int) -> QuadTree:
+    def restore_from_preorder(lst: List[str], width: int, height: int) -> QuadTree:
         """
         Restore the quad tree from the preorder list <lst>
         The preorder list <lst> is the preorder string split by comma
@@ -349,6 +548,7 @@ class QuadTree:
         tree.root = QuadTreeNodeInternal()
         tree.root.restore_from_preorder(lst, 0)
         return tree
+
 
 
 def maximum_loss(original: QuadTreeNode, compressed: QuadTreeNode) -> float:
@@ -369,7 +569,37 @@ def maximum_loss(original: QuadTreeNode, compressed: QuadTreeNode) -> float:
     1.5811388300841898
     """
     # TODO: complete this function
-    pass
+    # simultaneously traverse trees in same direction
+    # if comp has mean leaf node where orignal has subtree
+    # calculate the loss between mean and each leaf node of the sub tree
+    # save the loss in loss_arr
+    # traverse to parrent sibling, goto step 1
+    max_loss = [0]
+    maximum_loss_helper(max_loss, original.root , compressed.root)
+    # print("final max_loss: ", max_loss[0])
+    return max_loss[0]
+
+def maximum_loss_helper(max_loss, original, compressed):
+
+    if original.tree_size() == 1 and compressed.tree_size() == 1:
+        # if nodes are leaf - compare absolute loss value
+        if(original.preorder() != 'E' and compressed.preorder() != 'E'):
+            loss = abs(original.value - compressed.value)
+            if max_loss[0] < loss:
+                max_loss[0] = loss
+
+            # print("max_loss, loss: ", original.value, compressed.value ,max_loss, loss)
+
+    elif original.tree_size() > 1 and compressed.tree_size() == 1:
+        maximum_loss_helper(max_loss, original.children[0], compressed)
+        maximum_loss_helper(max_loss, original.children[1], compressed)
+        maximum_loss_helper(max_loss, original.children[2], compressed)
+        maximum_loss_helper(max_loss, original.children[3], compressed)
+    elif original.tree_size() > 1 and compressed.tree_size() > 1:
+        maximum_loss_helper(max_loss, original.children[0], compressed.children[0])
+        maximum_loss_helper(max_loss, original.children[1], compressed.children[1])
+        maximum_loss_helper(max_loss, original.children[2], compressed.children[2])
+        maximum_loss_helper(max_loss, original.children[3], compressed.children[3])
 
 
 if __name__ == '__main__':
